@@ -32,11 +32,13 @@ fn parse_input(input: &String) -> (Vec<Vec<char>>, Vec<MoveInstruction>) {
     }
 
     for line in raw_instructions.lines() {
-        let parts = line.split_whitespace();
+        let mut parts = line.split_whitespace().skip(1).step_by(2)
+            .map(|n| n.parse::<usize>().unwrap());
+        
         instructions.push(MoveInstruction {
-            quantity: parts.clone().skip(1).next().unwrap().parse::<usize>().unwrap(),
-            from: parts.clone().skip(3).next().unwrap().parse::<usize>().unwrap(),
-            to: parts.skip(5).next().unwrap().parse::<usize>().unwrap()
+            quantity: parts.next().unwrap(),
+            from: parts.next().unwrap(),
+            to: parts.next().unwrap()
         });
     }
 
