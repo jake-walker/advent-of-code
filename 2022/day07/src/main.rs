@@ -81,11 +81,8 @@ fn space_to_free(tree: &Vec<File>, available_space: i32, required_space: i32) ->
 // for part 2, find the best directory to delete - closest to the amount that needs to be freed
 fn dir_to_delete(tree: &Vec<File>, to_free: i32) -> i32 {
     let counter = count_dirs(tree);
-    // subtract the amount to be freed from each item, then filter out ones that are larger than 0
-    // this eliminates all of the directories that are too small
-    // then find the smallest one (i.e. closest to 0) and add back on the amount to be freed to get
-    // the original size of the directory
-    counter.iter().map(|x| (*x.1 as i32) - to_free).filter(|x| *x > 0).min().unwrap() + to_free
+    // filter out directories under the amount to be freed, then take the smallest of what is left
+    counter.iter().map(|x| *x.1 as i32).filter(|x| *x > to_free).min().unwrap()
 }
 
 fn main() {
