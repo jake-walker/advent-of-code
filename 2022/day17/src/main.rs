@@ -1,4 +1,4 @@
-use std::{fs, slice::Iter, str::Chars, iter::Cycle};
+use std::{fs, str::Chars, iter::Cycle, collections::HashMap};
 
 type Coordinate = (usize, usize);
 
@@ -131,28 +131,77 @@ fn drop_rock(map: &mut Vec<[bool; 7]>, rock: &Vec<Coordinate>, jet_pattern: &mut
     }
 }
 
-fn drop_many(rocks: &Vec<Vec<Coordinate>>, jet_pattern: &str, n: i64) -> Vec<[bool; 7]> {
+fn drop_many(rocks: &Vec<Vec<Coordinate>>, jet_pattern: &str, n: i64) -> i64 {
     let mut rock_cycle = rocks.iter().cycle();
     let mut jet_pattern_cycle = jet_pattern.chars().cycle();
     let mut map = Vec::new();
+    let mut truncate_heights: HashMap<usize, (i64, i64)> = HashMap::new();
+    let mut full_lines: i64 = 0;
+    let mut pattern_used = false;
 
-    for _ in 0..n {
+
+    let mut i = 0;
+
+    loop {
+        if i >= n {
+            break;
+        }
+
         drop_rock(&mut map, rock_cycle.next().expect("should have another rock"), &mut jet_pattern_cycle);
+
+        i += 1;
+
+        for j in (1..map.len()).rev() {
+            if map.get(j) == Some(&[true; 7]) {
+                full_lines += j as i64;
+                map = map[j..].to_vec();
+
+                if !pattern_used {
+                    if let Some(th) = truncate_heights.clone().get(&j) {
+                        truncate_heights.insert(j, (i, th.1 + 1));
+
+                        if th.1 > 2 {
+                            let i_increment = i - th.0;
+                            let lines_increment = j as i64;
+                            println!("found pattern: i=+{}, height=+{}", i_increment, lines_increment);
+
+                            while i + i_increment < n {
+                                i += i_increment;
+                                full_lines += lines_increment;
+                            }
+                            println!("finished pattern: i={}, height={}", i, full_lines);
+                            pattern_used = true;
+                        }
+                    } else {
+                        truncate_heights.insert(j, (i, 1));
+                    }
+                }
+
+                break;
+            }
+        }
     }
 
-    map
+    (map.len() as i64) + full_lines
 }
 
 fn main() {
+    // let rocks = parse_rocks(&fs::read_to_string("inputs/rocks.txt").expect("should be able to read input"));
+    // let jet_pattern = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>";
+    // let height = drop_many(&rocks, jet_pattern, 1000000000000);
+    // println!("{}", height);
+
+    //     return;
+
     let raw_rocks = fs::read_to_string("inputs/rocks.txt").expect("should be able to read input");
     let jet_pattern = fs::read_to_string("inputs/input.txt").expect("should be able to read input");
     let rocks = parse_rocks(&raw_rocks);
 
-    let map1 = drop_many(&rocks, &jet_pattern.trim(), 2022);
-    println!("Part 1: {}", map1.len());
+    let height1 = drop_many(&rocks, &jet_pattern.trim(), 2022);
+    println!("Part 1: {}", height1);
 
-    let map2 = drop_many(&rocks, &jet_pattern.trim(), 1000000000000);
-    println!("Part 1: {}", map2.len());
+    let height2 = drop_many(&rocks, &jet_pattern.trim(), 1000000000000);
+    println!("Part 2: {}", height2);
 }
 
 #[cfg(test)]
@@ -274,8 +323,18 @@ mod tests {
     fn drop_many_example() {
         let rocks = parse_rocks(&fs::read_to_string("inputs/rocks.txt").expect("should be able to read input"));
         let jet_pattern = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>";
-        let map = drop_many(&rocks, jet_pattern, 2022);
+        let height = drop_many(&rocks, jet_pattern, 2022);
 
-        assert_eq!(map.len(), 3068);
+        assert_eq!(height, 3068);
+    }
+
+    #[test]
+    #[ignore]
+    fn drop_many_example_long() {
+        let rocks = parse_rocks(&fs::read_to_string("inputs/rocks.txt").expect("should be able to read input"));
+        let jet_pattern = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>";
+        let height = drop_many(&rocks, jet_pattern, 1000000000000);
+
+        assert_eq!(height, 1514285714288);
     }
 }
