@@ -1,6 +1,4 @@
-use std::convert::TryFrom;
 use std::error::Error;
-use std::ops::Sub;
 
 fn parse_input(input: Vec<Vec<String>>) -> Vec<Vec<i64>> {
     input
@@ -24,10 +22,14 @@ fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
         .collect()
 }
 
-fn total_pair_distance(v: Vec<Vec<i64>>) -> u64 {
+fn split_vec<T>(v: Vec<Vec<T>>) -> (Vec<T>, Vec<T>) {
     let mut v_iter = v.into_iter();
-    let mut left = v_iter.next().unwrap();
-    let mut right = v_iter.next().unwrap();
+    (v_iter.next().unwrap(), v_iter.next().unwrap())
+}
+
+fn total_pair_distance(left: Vec<i64>, right: Vec<i64>) -> u64 {
+    let mut left = left;
+    let mut right = right;
 
     left.sort();
     right.sort();
@@ -35,18 +37,38 @@ fn total_pair_distance(v: Vec<Vec<i64>>) -> u64 {
     left.iter().zip(right).map(|(a, b)| a.abs_diff(b)).sum()
 }
 
-fn process_input(input: Vec<Vec<String>>) -> u64 {
-    total_pair_distance(transpose(parse_input(input)))
+fn product_similarity_score(left: Vec<i64>, right: Vec<i64>) -> i64 {
+    left.iter()
+        .map(|a| a * (right.iter().filter(|b| *b == a).count() as i64))
+        .sum()
+}
+
+fn process_part1(input: Vec<Vec<String>>) -> u64 {
+    let (left, right) = split_vec(transpose(parse_input(input)));
+    total_pair_distance(left, right)
+}
+
+fn process_part2(input: Vec<Vec<String>>) -> i64 {
+    let (left, right) = split_vec(transpose(parse_input(input)));
+    product_similarity_score(left, right)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!(
-        "example: {}",
-        process_input(aocutils::read_input_lines_whitespace("example")?)
+        "example part 1: {}",
+        process_part1(aocutils::read_input_lines_whitespace("example")?)
     );
     println!(
-        "part1: {}",
-        process_input(aocutils::read_input_lines_whitespace("input")?)
+        "part 1: {}",
+        process_part1(aocutils::read_input_lines_whitespace("input")?)
+    );
+    println!(
+        "example part 2: {}",
+        process_part2(aocutils::read_input_lines_whitespace("example")?)
+    );
+    println!(
+        "part 2: {}",
+        process_part2(aocutils::read_input_lines_whitespace("input")?)
     );
 
     Ok(())
