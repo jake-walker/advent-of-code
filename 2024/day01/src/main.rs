@@ -55,10 +55,6 @@ fn process_part2(input: Vec<Vec<String>>) -> i64 {
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!(
-        "example part 1: {}",
-        process_part1(aocutils::read_input_lines_whitespace("example")?)
-    );
-    println!(
         "part 1: {}",
         process_part1(aocutils::read_input_lines_whitespace("input")?)
     );
@@ -72,4 +68,25 @@ fn main() -> Result<(), Box<dyn Error>> {
     );
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part1_example() {
+        assert_eq!(
+            process_part1(aocutils::read_input_lines_whitespace("example").unwrap()),
+            11
+        )
+    }
+
+    #[test]
+    fn part2_example() {
+        assert_eq!(
+            process_part2(aocutils::read_input_lines_whitespace("example").unwrap()),
+            31
+        )
+    }
 }
