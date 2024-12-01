@@ -9,3 +9,4 @@ The Advent of Code is a yearly advent calendar of small programming puzzles whic
 - [**2021**](./2021) _(Go)_
 - [**2022**](./2022) _(Rust)_
 - [**2023**](./2023) _(Rust)_
+- [**2024**](./2024) _(Rust)_
