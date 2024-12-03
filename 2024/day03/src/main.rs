@@ -1,6 +1,5 @@
-use std::{error::Error, ops::Mul};
-
 use regex::Regex;
+use std::{error::Error, ops::Mul};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 enum Instruction {
@@ -9,11 +8,11 @@ enum Instruction {
     Mul(i64, i64),
 }
 
-fn parse_instructions(s: &str) -> Vec<Instruction> {
+fn parse_instructions(s: &str) -> Result<Vec<Instruction>, Box<dyn Error>> {
     // use regex to extract mul instructions that match the format
-    let re = Regex::new(r"(mul\(-?\d{1,3},-?\d{1,3}\))|(do\(\))|(don't\(\))").unwrap();
+    let re = Regex::new(r"(mul\(-?\d{1,3},-?\d{1,3}\))|(do\(\))|(don't\(\))")?;
 
-    re
+    Ok(re
         // loop over regex captures
         .captures_iter(s)
         .map(|c| {
@@ -22,25 +21,25 @@ fn parse_instructions(s: &str) -> Vec<Instruction> {
 
             match instruction_str {
                 // if this is a do instruction
-                "do()" => Instruction::Enable,
+                "do()" => Ok(Instruction::Enable),
                 // if this is a don't instruction
-                "don't()" => Instruction::Disable,
+                "don't()" => Ok(Instruction::Disable),
                 _ => {
                     if instruction_str.starts_with("mul(") {
                         // get the characters between the brackets in the instruction
                         let numbers = &instruction_str[4..instruction_str.len() - 1];
                         // split our numbers string once at a comma to get both numbers
-                        let (a, b) = numbers.split_once(",").unwrap();
+                        let (a, b) = numbers.split_once(",").ok_or("")?;
                         // parse the numbers and put into a mul instruction
-                        Instruction::Mul(a.parse().unwrap(), b.parse().unwrap())
+                        Ok(Instruction::Mul(a.parse().unwrap(), b.parse().unwrap()))
                     } else {
-                        panic!("unexpected instruction {}", instruction_str);
+                        Err(format!("unexpected instruction {}", instruction_str).into())
                     }
                 }
             }
         })
         // bring together our map into a vec/list
-        .collect::<Vec<Instruction>>()
+        .collect::<Result<Vec<Instruction>, Box<dyn Error>>>()?)
 }
 
 fn process_instructions(instructions: &Vec<Instruction>) -> i64 {
@@ -63,14 +62,8 @@ fn process_instructions(instructions: &Vec<Instruction>) -> i64 {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let input = aocutils::read_input_lines("input")?;
-
-    // loop over each line of the input, parsing instructions, then flatten into a single list
-    let instructions: Vec<Instruction> = input
-        .iter()
-        .map(|line| parse_instructions(line))
-        .flatten()
-        .collect();
+    let input = aocutils::read_input_lines("input")?.join("");
+    let instructions = parse_instructions(&input)?;
 
     println!(
         "part 1: {}",
@@ -94,14 +87,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_instructions_example_part1() {
+    fn test_parse_instructions_example_part1() -> Result<(), Box<dyn Error>> {
         assert_eq!(
-            parse_instructions(
-                aocutils::read_input_lines("example")
-                    .unwrap()
-                    .first()
-                    .unwrap(),
-            ),
+            parse_instructions(&aocutils::read_input_lines("example")?.join(""))?,
             Vec::from([
                 Instruction::Mul(2, 4),
                 Instruction::Mul(5, 5),
@@ -109,17 +97,14 @@ mod tests {
                 Instruction::Mul(8, 5)
             ])
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_parse_instructions_example_part2() {
+    fn test_parse_instructions_example_part2() -> Result<(), Box<dyn Error>> {
         assert_eq!(
-            parse_instructions(
-                aocutils::read_input_lines("example2")
-                    .unwrap()
-                    .first()
-                    .unwrap(),
-            ),
+            parse_instructions(&aocutils::read_input_lines("example2")?.join(""))?,
             Vec::from([
                 Instruction::Mul(2, 4),
                 Instruction::Disable,
@@ -129,6 +114,8 @@ mod tests {
                 Instruction::Mul(8, 5)
             ])
         );
+
+        Ok(())
     }
 
     #[test]
