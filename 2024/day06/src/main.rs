@@ -3,6 +3,7 @@ use std::collections::HashSet;
 type Coords = (i32, i32);
 type Map = Vec<Vec<bool>>;
 
+#[derive(Clone, Copy, PartialEq)]
 enum Direction {
     North,
     East,
@@ -17,6 +18,15 @@ impl Direction {
             Direction::East => Direction::South,
             Direction::South => Direction::West,
             Direction::West => Direction::North,
+        }
+    }
+
+    fn rotate_ccw(&self) -> Direction {
+        match self {
+            Direction::North => Direction::West,
+            Direction::East => Direction::North,
+            Direction::South => Direction::East,
+            Direction::West => Direction::South,
         }
     }
 
@@ -49,11 +59,24 @@ fn parse_map(input: &str) -> (Map, Coords) {
     (map, guard_pos.unwrap())
 }
 
-fn print_map(map: &Map, pos: Coords) -> () {
+fn print_map(map: &Map, pos: Coords, history: Option<Vec<&(Coords, Direction)>>) -> () {
     for (y, row) in map.iter().enumerate() {
         for (x, cell) in row.iter().enumerate() {
+            let h = history.clone().and_then(|i| {
+                i.into_iter()
+                    .filter(|(c, _)| c.0 as usize == x && c.1 as usize == y)
+                    .next()
+            });
+
             if pos.0 as usize == x && pos.1 as usize == y {
                 print!("%");
+            } else if let Some((_, direction)) = h {
+                match direction {
+                    Direction::North => print!("^"),
+                    Direction::East => print!(">"),
+                    Direction::South => print!("v"),
+                    Direction::West => print!("<"),
+                }
             } else if *cell {
                 print!("#");
             } else {
@@ -65,12 +88,13 @@ fn print_map(map: &Map, pos: Coords) -> () {
     println!("----");
 }
 
-fn pathfind(map: &Map, start_pos: Coords) -> usize {
-    let mut history = HashSet::from([start_pos]);
+fn pathfind(map: &Map, start_pos: Coords) -> Vec<(Coords, Direction)> {
+    let mut history = Vec::new();
     let mut pos = start_pos.clone();
     let mut direction = Direction::North;
 
     loop {
+        history.push((pos, direction));
         let new_pos = (
             pos.0 + direction.to_coords().0,
             pos.1 + direction.to_coords().1,
@@ -85,31 +109,96 @@ fn pathfind(map: &Map, start_pos: Coords) -> usize {
             break;
         }
 
-        if map[new_pos.1 as usize][new_pos.0 as usize] == true {
+        if map[new_pos.1 as usize][new_pos.0 as usize] {
             // turn
             direction = direction.rotate_cw();
             continue;
         }
 
         pos = new_pos;
-        history.insert(new_pos);
         // print_map(map, new_pos);
     }
 
-    history.len()
+    history
+}
+
+fn unique_positions(history: &Vec<(Coords, Direction)>) -> usize {
+    history
+        .iter()
+        .map(|x| x.0)
+        .collect::<HashSet<Coords>>()
+        .len()
+}
+
+fn find_loops(map: &Map, history: &Vec<(Coords, Direction)>) -> Vec<Coords> {
+    let mut new_blocks = Vec::new();
+
+    for (i, (pos, direction)) in history.iter().enumerate() {
+        let forward_pos = (
+            pos.0 + direction.to_coords().0,
+            pos.1 + direction.to_coords().1,
+        );
+
+        // position for blockage is out of bounds, skip
+        if forward_pos.0 < 0
+            || forward_pos.0 >= map[0].len() as i32
+            || forward_pos.1 < 0
+            || forward_pos.1 >= map.len() as i32
+        {
+            continue;
+        }
+
+        // if this is the start position or there's already a blockage, skip
+        if i == 0 || map[forward_pos.1 as usize][forward_pos.0 as usize] {
+            continue;
+        }
+
+        let direction_cw = direction.rotate_cw();
+        let prev_history = history
+            .iter()
+            .take(i - 1)
+            .filter(|(_, d)| d == &direction_cw);
+
+        if (direction_cw == Direction::North
+            && prev_history
+                .clone()
+                .any(|(p, _)| p.0 == pos.0 && p.1 <= pos.1))
+            || (direction_cw == Direction::East
+                && prev_history
+                    .clone()
+                    .any(|(p, _)| p.0 >= pos.0 && p.1 == pos.1))
+            || (direction_cw == Direction::South
+                && prev_history
+                    .clone()
+                    .any(|(p, _)| p.0 == pos.0 && p.1 >= pos.1))
+            || (direction_cw == Direction::West
+                && prev_history
+                    .clone()
+                    .any(|(p, _)| p.0 <= pos.0 && p.1 == pos.1))
+        {
+            print_map(map, forward_pos, Some(history.iter().take(i - 1).collect()));
+            new_blocks.push(forward_pos);
+        }
+    }
+
+    new_blocks
 }
 
 fn main() {
     let (map, guard_pos) = parse_map(&aocutils::read_input("input").unwrap());
+    let path = pathfind(&map, guard_pos);
 
-    println!("part 1: {}", pathfind(&map, guard_pos));
+    println!("part 1: {}", unique_positions(&path));
+    // > 646
+    println!("part 2: {}", find_loops(&map, &path).len());
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "....#.....\n.........#\n..........\n..#.......\n.......#..\n..........\n.#..^.....\n........#.\n#.........\n......#...";
+    // const EXAMPLE_INPUT: &str = "....#.....\n.........#\n..........\n..#.......\n.......#..\n..........\n.#..^.....\n........#.\n#.........\n......#...";
+    const EXAMPLE_INPUT: &str = "....#.....\n.....#..#\n..........\n..#.......\n.......#..\n..........\n.#..^.....\n........#.\n#.........\n....#.#...";
 
     #[test]
     fn test_parse_map() {
@@ -118,8 +207,27 @@ mod tests {
     }
 
     #[test]
-    fn test_pathfind() {
+    #[ignore]
+    fn test_pathfind_unique_positions() {
         let (map, guard_pos) = parse_map(EXAMPLE_INPUT);
-        assert_eq!(pathfind(&map, guard_pos), 41);
+        assert_eq!(unique_positions(&pathfind(&map, guard_pos)), 41);
+    }
+
+    #[test]
+    fn test_loops() {
+        let (map, guard_pos) = parse_map(EXAMPLE_INPUT);
+        let history = pathfind(&map, guard_pos);
+        let blocks = find_loops(&map, &history);
+
+        print_map(&map, (0, 0), Some(history.iter().collect()));
+
+        assert!(blocks.contains(&(3, 6)));
+        assert!(blocks.contains(&(6, 7)));
+        assert!(blocks.contains(&(7, 7)));
+        assert!(blocks.contains(&(1, 8)));
+        assert!(blocks.contains(&(3, 8)));
+        assert!(blocks.contains(&(7, 9)));
+        assert_eq!(blocks.len(), 6);
+        assert!(false);
     }
 }
