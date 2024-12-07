@@ -122,18 +122,16 @@ fn pathfind(
 
         // check bounds
         if !in_map_bounds(map, &new_pos) {
-            // println!("stopped pathfinding, left map");
             return (false, history);
         }
 
         if i >= 10 {
-            println!("ahh");
+            println!("we've been stuck for a while");
             return (false, history);
         }
 
         // quit if visited before
         if history.contains(&(new_pos, direction)) {
-            // println!("stopped pathfinding, looping");
             return (true, history);
         }
 
@@ -147,7 +145,6 @@ fn pathfind(
         i = 0;
         pos = new_pos;
         history.push((pos, direction));
-        // print_map(map, new_pos);
     }
 }
 
@@ -169,13 +166,18 @@ fn find_loops(map: &Map, history: &Vec<(Coords, Direction)>) -> Vec<Coords> {
             &direction.rotate_cw().rotate_cw(),
             &direction.rotate_cw().rotate_cw().rotate_cw(),
         ] {
-            println!("checking direction {:?} @ {},{}", d, pos.0, pos.1);
-            let _ = io::stdout().flush();
             let block_pos = (pos.0 + d.to_coords().0, pos.1 + d.to_coords().1);
 
             // check bounds
-            if !in_map_bounds(map, &block_pos) || !in_map_bounds(map, &pos) {
-                continue;
+            if !in_map_bounds(map, &pos) {
+                break;
+            }
+            if !in_map_bounds(map, &block_pos) {
+                if d == direction {
+                    break;
+                } else {
+                    continue;
+                }
             }
 
             let mut new_map = map.clone();
@@ -207,7 +209,6 @@ fn main() {
     let (_, path) = pathfind(&map, guard_pos, Direction::North);
 
     println!("part 1: {}", unique_positions(&path));
-    // > 647, !1836
     println!("part 2: {}", find_loops(&map, &path).len());
 }
 
@@ -238,8 +239,6 @@ mod tests {
         let (_, history) = pathfind(&map, guard_pos, Direction::North);
         let blocks = find_loops(&map, &history);
 
-        // print_map(&map, (0, 0), Some(history.iter().collect()));
-
         assert!(blocks.contains(&(3, 6)));
         assert!(blocks.contains(&(6, 7)));
         assert!(blocks.contains(&(7, 7)));
@@ -247,15 +246,12 @@ mod tests {
         assert!(blocks.contains(&(3, 8)));
         assert!(blocks.contains(&(7, 9)));
         assert_eq!(blocks.len(), 6);
-        // assert!(false);
     }
 
     #[test]
     fn test_custom_case_1() {
         let (map, guard_pos) = parse_map("..#.\n...#\n..^.");
         let (_, history) = pathfind(&map, guard_pos, Direction::North);
-
-        print_map(&map, guard_pos, Some(history.iter().collect()));
 
         assert_eq!(unique_positions(&history), 2);
         assert_eq!(find_loops(&map, &history).len(), 0);
@@ -266,9 +262,6 @@ mod tests {
         let (map, guard_pos) = parse_map(".#.\n#.#\n#^.\n...");
         let (_, history) = pathfind(&map, guard_pos, Direction::North);
 
-        print_map(&map, guard_pos, Some(history.iter().collect()));
-        let _ = io::stdout().flush();
-
         assert_eq!(unique_positions(&history), 3);
         assert_eq!(find_loops(&map, &history).len(), 1);
     }
@@ -277,8 +270,6 @@ mod tests {
     fn test_custom_case_3() {
         let (map, guard_pos) = parse_map(".#.\n..#\n#^.\n...");
         let (_, history) = pathfind(&map, guard_pos, Direction::North);
-
-        print_map(&map, guard_pos, Some(history.iter().collect()));
 
         assert_eq!(unique_positions(&history), 3);
         assert_eq!(find_loops(&map, &history).len(), 1);
