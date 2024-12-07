@@ -6,13 +6,12 @@ use itertools::Itertools;
 enum Operation {
     Add,
     Multiply,
+    Concatenate,
 }
 
-impl Operation {
-    fn variants() -> Vec<Self> {
-        vec![Operation::Add, Operation::Multiply]
-    }
-}
+const PART1_OPERATIONS: [Operation; 2] = [Operation::Add, Operation::Multiply];
+const PART2_OPERATIONS: [Operation; 3] =
+    [Operation::Add, Operation::Multiply, Operation::Concatenate];
 
 #[derive(Debug, PartialEq, Eq)]
 struct Equation {
@@ -37,15 +36,13 @@ fn parse_input(input: &str) -> Vec<Equation> {
         .collect()
 }
 
-fn operation_combinations(l: usize) -> Vec<Vec<Operation>> {
-    std::iter::repeat(Operation::variants())
-        .take(l)
+fn calculate_brute_force(eq: &Equation, operations: &[Operation]) -> bool {
+    let op_combos: Vec<Vec<&Operation>> = std::iter::repeat(operations)
+        .take(eq.numbers.len() - 1)
         .multi_cartesian_product()
-        .collect()
-}
+        .collect();
 
-fn calculate_brute_force(eq: &Equation) -> bool {
-    for operations in operation_combinations(eq.numbers.len()) {
+    for operations in op_combos {
         let mut numbers_iter = eq.numbers.clone().into_iter();
         let mut result = numbers_iter.next().unwrap();
 
@@ -53,6 +50,7 @@ fn calculate_brute_force(eq: &Equation) -> bool {
             match op {
                 Operation::Add => result += n,
                 Operation::Multiply => result *= n,
+                Operation::Concatenate => result = format!("{}{}", result, n).parse().unwrap(),
             }
         }
 
@@ -64,9 +62,9 @@ fn calculate_brute_force(eq: &Equation) -> bool {
     false
 }
 
-fn part1(eqs: Vec<Equation>) -> i64 {
+fn sum_valid_equations(eqs: &Vec<Equation>, operations: &[Operation]) -> i64 {
     eqs.iter()
-        .filter(|eq| calculate_brute_force(eq))
+        .filter(|eq| calculate_brute_force(eq, operations))
         .map(|eq| eq.result)
         .sum()
 }
@@ -74,7 +72,8 @@ fn part1(eqs: Vec<Equation>) -> i64 {
 fn main() {
     let eqs = parse_input(&aocutils::read_input("input").unwrap());
 
-    println!("part 1: {}", part1(eqs));
+    println!("part 1: {}", sum_valid_equations(&eqs, &PART1_OPERATIONS));
+    println!("part 2: {}", sum_valid_equations(&eqs, &PART2_OPERATIONS));
 }
 
 #[cfg(test)]
@@ -97,15 +96,13 @@ mod tests {
     }
 
     #[test]
-    fn test_operation_combinations() {
+    fn test_calculate_brute_force_part1() {
         assert_eq!(
-            operation_combinations(2),
-            Vec::from([
-                Vec::from([Operation::Add, Operation::Add]),
-                Vec::from([Operation::Add, Operation::Multiply]),
-                Vec::from([Operation::Multiply, Operation::Add]),
-                Vec::from([Operation::Multiply, Operation::Multiply])
-            ])
+            parse_input(EXAMPLE_INPUT)
+                .iter()
+                .map(|eq| calculate_brute_force(eq, &PART1_OPERATIONS))
+                .collect::<Vec<bool>>(),
+            vec![true, true, false, false, false, false, false, false, true]
         )
     }
 
@@ -122,6 +119,17 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(part1(parse_input(EXAMPLE_INPUT)), 3749);
+        assert_eq!(
+            sum_valid_equations(&parse_input(EXAMPLE_INPUT), &PART1_OPERATIONS),
+            3749
+        );
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(
+            sum_valid_equations(&parse_input(EXAMPLE_INPUT), &PART2_OPERATIONS),
+            11387
+        );
     }
 }
