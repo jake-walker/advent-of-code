@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 type Coords = (usize, usize);
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 struct Map {
     antennas: HashMap<Coords, char>,
     antinodes: HashMap<Coords, char>,
@@ -33,7 +33,7 @@ impl Map {
         }
     }
 
-    fn process_antinodes(&mut self) -> () {
+    fn process_antinodes(&mut self, part2: bool) -> () {
         // create a list of coordinates where each frequency has antennas
         let mut freq_antennas: HashMap<char, Vec<Coords>> = HashMap::new();
 
@@ -48,9 +48,23 @@ impl Map {
                 // the distance between the two antennas in x and y components
                 let (xi, yi) = (b.0 as i32 - a.0 as i32, b.1 as i32 - a.1 as i32);
 
+                // this is really lazy, but it works
+                // the good plan was to work out the origin of the antenna using (a.0 % xi, a.1 % yi)
+                // this would be where the *first* antenna is on the grid, then we add xi and yi
+                // respectively until we reach out out bounds. but this doesn't work with part 1
+                // as well, meaning this would need to have a separate function and i didn't want any
+                // duplicated code
+                let range = {
+                    if !part2 {
+                        [-1, 2].to_vec()
+                    } else {
+                        Vec::from_iter(-1000..1000)
+                    }
+                };
+
                 // we want to place an antinode 1 distance the first antenna, and 2 in front
                 // 0 would be the first antenna itself, and 1 would be the second antenna
-                for i in [-1, 2] {
+                for i in range {
                     // calculate position of antinode
                     let (x, y) = (a.0 as i32 + (xi * i), a.1 as i32 + (yi * i));
 
@@ -88,13 +102,21 @@ fn parse_input(input: &str) -> Map {
 }
 
 fn main() {
-    let mut m = parse_input(&aocutils::read_input("input").unwrap());
-    m.process_antinodes();
+    let m = parse_input(&aocutils::read_input("input").unwrap());
 
+    let mut m1 = m.clone();
+    m1.process_antinodes(false);
     println!(
         "part 1: {}",
-        m.antinodes.keys().collect::<HashSet<_>>().len()
-    )
+        m1.antinodes.keys().collect::<HashSet<_>>().len()
+    );
+
+    let mut m2 = m;
+    m2.process_antinodes(true);
+    println!(
+        "part 2: {}",
+        m2.antinodes.keys().collect::<HashSet<_>>().len()
+    );
 }
 
 #[cfg(test)]
@@ -125,9 +147,9 @@ mod tests {
     }
 
     #[test]
-    fn test_process_antinodes() {
+    fn test_process_antinodes_p1() {
         let mut m = parse_input(EXAMPLE_INPUT);
-        m.process_antinodes();
+        m.process_antinodes(false);
         m.draw();
 
         let mut actual_antinodes = m.antinodes.keys().unique().collect::<Vec<&Coords>>();
@@ -152,5 +174,16 @@ mod tests {
         expected_antinodes.sort();
 
         assert_eq!(actual_antinodes, expected_antinodes);
+    }
+
+    #[test]
+    fn test_process_antinodes_p2() {
+        let mut m = parse_input(EXAMPLE_INPUT);
+        m.process_antinodes(true);
+        m.draw();
+
+        let actual_antinodes = m.antinodes.keys().collect::<HashSet<_>>().len();
+
+        assert_eq!(actual_antinodes, 34);
     }
 }
