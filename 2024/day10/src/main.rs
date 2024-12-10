@@ -1,4 +1,4 @@
-use petgraph::{algo::dijkstra, prelude::DiGraphMap};
+use petgraph::{algo::all_simple_paths, prelude::DiGraphMap};
 
 type Coords = (usize, usize, isize);
 
@@ -50,29 +50,37 @@ fn parse_input(input: &str) -> DiGraphMap<Coords, ()> {
     g
 }
 
-fn get_trailhead_scores(g: &DiGraphMap<Coords, ()>) -> Option<usize> {
+fn get_trailhead_scores_and_ratings(g: &DiGraphMap<Coords, ()>) -> (usize, usize) {
     let trailhead = g.nodes().filter(|(_, _, z)| *z == 0);
     let peaks = g.nodes().filter(|(_, _, z)| *z == 9);
-    let mut score = None;
+
+    let mut total_score = 0;
+    let mut total_rating = 0;
 
     for trailhead in trailhead {
         for peak in peaks.clone() {
-            let res = dijkstra(g, trailhead, Some(peak), |_| 1);
+            let res =
+                all_simple_paths::<Vec<_>, _>(g, trailhead, peak, 0, None).collect::<Vec<_>>();
 
-            if res.keys().any(|k| *k == peak) {
-                score = Some(score.unwrap_or(0) + 1);
+            total_rating += res.len();
+
+            if res.len() > 0 {
+                total_score += 1;
             }
         }
     }
 
-    score
+    (total_score, total_rating)
 }
 
 fn main() {
     let input = aocutils::read_input("input").unwrap();
     let g = parse_input(&input);
 
-    println!("part 1: {}", get_trailhead_scores(&g).unwrap());
+    let (total_score, total_rating) = get_trailhead_scores_and_ratings(&g);
+
+    println!("part 1: {}", total_score);
+    println!("part 2: {}", total_rating);
 }
 
 #[cfg(test)]
@@ -86,16 +94,26 @@ mod tests {
     const EXAMPLE_5: &str =
         "89010123\n78121874\n87430965\n96549874\n45678903\n32019012\n01329801\n10456732";
 
+    const EXAMPLE_6: &str = ".....0.\n..4321.\n..5..2.\n..6543.\n..7..4.\n..8765.\n..9....";
+    const EXAMPLE_7: &str = "012345\n123456\n234567\n345678\n4.6789\n56789.";
+
     #[test]
     fn test_get_trailhead_scores() {
         let scores = [EXAMPLE_1, EXAMPLE_2, EXAMPLE_3, EXAMPLE_4, EXAMPLE_5]
             .iter()
-            .map(|input| get_trailhead_scores(&parse_input(input)))
+            .map(|input| get_trailhead_scores_and_ratings(&parse_input(input)).0)
             .collect::<Vec<_>>();
 
-        assert_eq!(
-            scores,
-            Vec::from([Some(1), Some(2), Some(4), Some(3), Some(36)])
-        );
+        assert_eq!(scores, vec![1, 2, 4, 3, 36]);
+    }
+
+    #[test]
+    fn test_get_trailhead_ratings() {
+        let scores = [EXAMPLE_6, EXAMPLE_3, EXAMPLE_7, EXAMPLE_5]
+            .iter()
+            .map(|input| get_trailhead_scores_and_ratings(&parse_input(input)).1)
+            .collect::<Vec<_>>();
+
+        assert_eq!(scores, vec![3, 13, 227, 81]);
     }
 }
