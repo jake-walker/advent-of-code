@@ -1,10 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    sync::atomic::AtomicUsize,
-};
-
-// not sure whether the plant types are guarenteed to be unique, so this is for uniquely renumbering them
-static PLOT_COUNTER: AtomicUsize = AtomicUsize::new(1);
+use std::collections::HashSet;
 
 type Coords = (usize, usize);
 
@@ -41,35 +35,63 @@ fn find_plot(
     }
 }
 
-fn find_all_plots(map: &Vec<Vec<char>>) -> HashMap<usize, HashSet<Coords>> {
-    let mut plots = HashMap::new();
+fn count_edges(region: &HashSet<Coords>, x_max: i32, y_max: i32) -> usize {
+    let mut sides = 0;
+
+    for plot in region {
+        for (xi, yi) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
+            let x = plot.0 as i32 + xi;
+            let y = plot.1 as i32 + yi;
+
+            if x < 0
+                || x >= x_max as i32
+                || y < 0
+                || y >= y_max as i32
+                || !region.contains(&(x as usize, y as usize))
+            {
+                sides += 1;
+            }
+        }
+    }
+
+    sides
+}
+
+fn find_all_plots(map: &Vec<Vec<char>>) -> Vec<HashSet<Coords>> {
+    let mut plots = Vec::new();
 
     for (y, row) in map.iter().enumerate() {
         for (x, plant_type) in row.iter().enumerate() {
-            if plots
-                .values()
-                .any(|v: &HashSet<Coords>| v.contains(&(x, y)))
-            {
+            if plots.iter().any(|v: &HashSet<Coords>| v.contains(&(x, y))) {
                 continue;
             }
 
             let mut plot_coords = HashSet::new();
             find_plot((x, y), map, plant_type, &mut plot_coords);
 
-            plots.insert(
-                PLOT_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
-                plot_coords,
-            );
+            plots.push(plot_coords);
         }
     }
 
     plots
 }
 
+fn calculate_price(region: &HashSet<Coords>, x_max: i32, y_max: i32) -> usize {
+    let edges = count_edges(region, x_max, y_max);
+    edges * region.len()
+}
+
+fn part1(map: &Vec<Vec<char>>) -> usize {
+    find_all_plots(map)
+        .iter()
+        .map(|r| calculate_price(r, map[0].len() as i32, map.len() as i32))
+        .sum()
+}
+
 fn main() {
     let map = parse_input(&aocutils::read_input("input").unwrap());
 
-    let _ = find_all_plots(&map);
+    println!("part 1: {}", part1(&map));
 }
 
 #[cfg(test)]
@@ -92,8 +114,21 @@ mod tests {
         let map = parse_input(EXAMPLE_1);
         let plots = find_all_plots(&map);
 
-        println!("{:#?}", plots);
+        assert_eq!(plots.len(), 5);
+    }
 
-        assert!(false);
+    #[test]
+    fn test_count_edges() {
+        assert_eq!(
+            count_edges(&HashSet::from([(0, 0), (1, 0), (2, 0), (3, 0)]), 4, 4),
+            10
+        );
+    }
+
+    #[test]
+    fn test_part1() {
+        let map = parse_input(EXAMPLE_1);
+
+        assert_eq!(part1(&map), 140);
     }
 }
