@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, f32::consts::E, hash::Hash};
 
 type Coords = (usize, usize);
 
@@ -57,6 +57,54 @@ fn count_edges(region: &HashSet<Coords>, x_max: i32, y_max: i32) -> usize {
     sides
 }
 
+fn count_sides(region: &HashSet<Coords>) -> usize {
+    let mut unique_sides = 0;
+    let mut checked_edges = HashSet::new();
+
+    for &(x, y) in region {
+        for (dx, dy, edge_type) in [
+            (0, -1, "top"),   // top edge
+            (0, 1, "bottom"), // bottom edge
+            (-1, 0, "left"),  // left edge
+            (1, 0, "right"),  // right edge
+        ] {
+            // Careful coordinate conversion and boundary checking
+            let nx = x as i32 + dx;
+            let ny = y as i32 + dy;
+
+            // Check if neighbor is out of region bounds
+            let out_of_region = nx < 0 || ny < 0 || !region.contains(&(nx as usize, ny as usize));
+
+            if out_of_region {
+                // Find the extent of this continuous edge
+                let mut left = x;
+                let mut right = x;
+
+                // Extend left while maintaining continuity
+                while left > 0 && region.contains(&(left - 1, y)) {
+                    left -= 1;
+                }
+
+                // Extend right while maintaining continuity
+                while right < usize::MAX - 1 && region.contains(&(right + 1, y)) {
+                    right += 1;
+                }
+
+                // Create a unique key for this edge span
+                let edge_key = (y, left, right, edge_type);
+
+                // Count if this exact edge span hasn't been seen
+                if !checked_edges.contains(&edge_key) {
+                    unique_sides += 1;
+                    checked_edges.insert(edge_key);
+                }
+            }
+        }
+    }
+
+    unique_sides
+}
+
 fn find_all_plots(map: &Vec<Vec<char>>) -> Vec<HashSet<Coords>> {
     let mut plots = Vec::new();
 
@@ -76,22 +124,29 @@ fn find_all_plots(map: &Vec<Vec<char>>) -> Vec<HashSet<Coords>> {
     plots
 }
 
-fn calculate_price(region: &HashSet<Coords>, x_max: i32, y_max: i32) -> usize {
-    let edges = count_edges(region, x_max, y_max);
+fn calculate_price(region: &HashSet<Coords>, x_max: i32, y_max: i32, part2: bool) -> usize {
+    let edges = {
+        if !part2 {
+            count_edges(region, x_max, y_max)
+        } else {
+            count_sides(region)
+        }
+    };
     edges * region.len()
 }
 
-fn part1(map: &Vec<Vec<char>>) -> usize {
+fn calculate_price_all(map: &Vec<Vec<char>>, part2: bool) -> usize {
     find_all_plots(map)
         .iter()
-        .map(|r| calculate_price(r, map[0].len() as i32, map.len() as i32))
+        .map(|r| calculate_price(r, map[0].len() as i32, map.len() as i32, part2))
         .sum()
 }
 
 fn main() {
     let map = parse_input(&aocutils::read_input("input").unwrap());
 
-    println!("part 1: {}", part1(&map));
+    println!("part 1: {}", calculate_price_all(&map, false));
+    println!("part 2: {}", calculate_price_all(&map, true))
 }
 
 #[cfg(test)]
@@ -126,9 +181,24 @@ mod tests {
     }
 
     #[test]
+    fn test_count_sides() {
+        assert_eq!(
+            count_sides(&HashSet::from([(0, 0), (1, 0), (2, 0), (3, 0)])),
+            4
+        );
+    }
+
+    #[test]
     fn test_part1() {
         let map = parse_input(EXAMPLE_1);
 
-        assert_eq!(part1(&map), 140);
+        assert_eq!(calculate_price_all(&map, false), 140);
+    }
+
+    #[test]
+    fn test_part2() {
+        let map = parse_input(EXAMPLE_1);
+
+        assert_eq!(calculate_price_all(&map, true), 80);
     }
 }
