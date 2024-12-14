@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use regex::Regex;
 
 type Coords = (isize, isize);
@@ -106,14 +107,85 @@ fn count_robots(robots: &Vec<Robot>, boundary: Coords) -> (usize, usize, usize, 
     )
 }
 
+/// Scan for lines with `threshold` items in a row
+fn scan_for_grouped(robots: &Vec<Robot>, boundary: Coords, i: usize, threshold: usize) -> bool {
+    for y in 0..boundary.1 {
+        // get all the robot x positions in this row
+        let mut x_positions = robots
+            .iter()
+            .filter(|r| r.position.1 == y)
+            .map(|r| r.position.0)
+            .unique()
+            .collect::<Vec<isize>>();
+
+        if x_positions.len() == 0 {
+            continue;
+        }
+
+        x_positions.sort();
+
+        let mut max_len = 0;
+        let mut current_len = 0;
+
+        for i in 0..(x_positions.len() - 1) {
+            // get the previous, current and next positions in the line
+            let prev = {
+                if i <= 0 {
+                    &-100
+                } else {
+                    &x_positions[i - 1]
+                }
+            };
+            let cur = &x_positions[i];
+            let next = &x_positions[i + 1];
+
+            // if the previous is not 1 position before the current, reset the current length counter
+            if cur - prev != 1 {
+                current_len = 0;
+            }
+
+            // if the next position is 1 in front, increment the current length
+            if next - cur == 1 {
+                current_len += 1;
+            }
+
+            // if the current length is the highest, update the max length
+            if current_len > max_len {
+                max_len = current_len;
+            }
+        }
+
+        // if this length is over the threshold, print the map for review
+        if max_len > threshold {
+            println!(
+                "-=-=-=-=-=-=-=- t={} -=-=-=-=-=-=-=-\n{}",
+                i,
+                gen_map(robots, boundary)
+            );
+            return true;
+        }
+    }
+
+    false
+}
+
 fn main() {
     let mut robots = parse_input(&aocutils::read_input("input").unwrap());
-    for _ in 0..100 {
+    for t in 0..100 {
         move_robots(&mut robots, BOUNDARY);
+        scan_for_grouped(&robots, BOUNDARY, t, 10);
     }
 
     let (tl, tr, bl, br) = count_robots(&robots, BOUNDARY);
     println!("part 1: {}", tl * tr * bl * br);
+
+    let mut t = 100;
+    let mut found = false;
+    while !found {
+        t += 1;
+        move_robots(&mut robots, BOUNDARY);
+        found = scan_for_grouped(&robots, BOUNDARY, t, 10);
+    }
 }
 
 #[cfg(test)]
