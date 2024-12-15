@@ -13,7 +13,7 @@ impl Puzzle {
     fn all_box_gps(&self) -> Vec<isize> {
         self.map
             .iter()
-            .filter(|(_, x)| x == &&Item::Box)
+            .filter(|(_, x)| x == &&Item::Box || x == &&Item::BigBoxLeft)
             .map(|((x, y), _)| 100 * y + x)
             .collect()
     }
@@ -29,6 +29,8 @@ impl Puzzle {
                     (true, _) => "@",
                     (_, Some(Item::Box)) => "O",
                     (_, Some(Item::Wall)) => "#",
+                    (_, Some(Item::BigBoxLeft)) => "[",
+                    (_, Some(Item::BigBoxRight)) => "]",
                     (_, None) => ".",
                 };
             }
@@ -48,7 +50,7 @@ impl Puzzle {
                 // if there's a wall, do nothing
                 Some(Item::Wall) => (),
 
-                Some(Item::Box) => {
+                Some(Item::Box | Item::BigBoxLeft | Item::BigBoxRight) => {
                     // can this box be moved?
                     let moveable;
                     let mut next_pos = new_pos;
@@ -63,18 +65,22 @@ impl Puzzle {
                                 moveable = false;
                                 break;
                             }
+                            // TODO: check next position for left/right side of box for obstructions
                             _ => (),
                         }
                     }
 
-                    if moveable {
-                        // add a box to the empty space
-                        self.map.insert(next_pos, Item::Box);
-                        // remove the box from robot position
-                        self.map.remove(&new_pos);
-                        // move the robot
-                        self.robot = new_pos;
+                    if !moveable {
+                        return true;
                     }
+
+                    // TODO: change this to shuffle items along
+                    // add a box to the empty space
+                    self.map.insert(next_pos, Item::Box);
+                    // remove the box from robot position
+                    self.map.remove(&new_pos);
+                    // move the robot
+                    self.robot = new_pos;
                 }
             }
 
@@ -89,6 +95,8 @@ impl Puzzle {
 enum Item {
     Box,
     Wall,
+    BigBoxLeft,
+    BigBoxRight,
 }
 
 impl From<char> for Item {
@@ -96,6 +104,8 @@ impl From<char> for Item {
         match value {
             '#' => Item::Wall,
             'O' => Item::Box,
+            '[' => Item::BigBoxLeft,
+            ']' => Item::BigBoxRight,
             _ => panic!("unexpected item {}", value),
         }
     }
@@ -146,14 +156,29 @@ impl Direction {
     }
 }
 
-fn parse_input(input: &str) -> Puzzle {
+fn parse_input(input: &str, double: bool) -> Puzzle {
     let (map, movements) = input.split_once("\n\n").unwrap();
 
     let map_iter = map.lines().enumerate().flat_map(|(y, line)| {
         line.chars()
             .enumerate()
             .filter(|(_, c)| c != &'.')
-            .map(move |(x, c)| ((x as isize, y as isize), c))
+            .flat_map(move |(x, c)| {
+                if double {
+                    let (mut left_char, mut right_char) = (c, c);
+
+                    if c == 'O' {
+                        (left_char, right_char) = ('[', ']');
+                    }
+
+                    Vec::from([
+                        ((x as isize * 2, y as isize), left_char),
+                        (((x as isize * 2) + 1, y as isize), right_char),
+                    ])
+                } else {
+                    Vec::from([((x as isize, y as isize), c)])
+                }
+            })
     });
 
     Puzzle {
@@ -171,7 +196,7 @@ fn parse_input(input: &str) -> Puzzle {
 }
 
 fn main() {
-    let mut puzzle = parse_input(&aocutils::read_input("input").unwrap());
+    let mut puzzle = parse_input(&aocutils::read_input("input").unwrap(), false);
     while puzzle.move_robot() {}
 
     println!("part 1: {}", puzzle.all_box_gps().iter().sum::<isize>())
@@ -182,10 +207,12 @@ mod tests {
     use super::*;
 
     const SMALL_EXAMPLE: &str = "########\n#..O.O.#\n##@.O..#\n#...O..#\n#.#.O..#\n#...O..#\n#......#\n########\n\n<^^>>>vv<v>>v<<";
+    const DOUBLE_EXAMPLE: &str =
+        "#######\n#...#.#\n#.....#\n#..OO@#\n#..O..#\n#.....#\n#######\n\n<vv<<^^<<^^";
 
     #[test]
     fn test_parse_input() {
-        let puzzle = parse_input(SMALL_EXAMPLE);
+        let puzzle = parse_input(SMALL_EXAMPLE, false);
 
         assert_eq!(puzzle.robot, (2, 2));
         assert_eq!(
@@ -217,7 +244,7 @@ mod tests {
 
     #[test]
     fn test_move_robot() {
-        let mut puzzle = parse_input(SMALL_EXAMPLE);
+        let mut puzzle = parse_input(SMALL_EXAMPLE, false);
         let expected_positions: Vec<Coords> = Vec::from([
             (2, 2),
             (2, 2),
@@ -246,7 +273,7 @@ mod tests {
 
     #[test]
     fn test_big_example() {
-        let mut puzzle = parse_input(&aocutils::read_input("big_example").unwrap());
+        let mut puzzle = parse_input(&aocutils::read_input("big_example").unwrap(), false);
         while puzzle.move_robot() {}
 
         assert_eq!(puzzle.draw(), "##########\n#.O.O.OOO#\n#........#\n#OO......#\n#OO@.....#\n#O#.....O#\n#O.....OO#\n#O.....OO#\n#OO....OO#\n##########");
@@ -277,7 +304,7 @@ mod tests {
 
     #[test]
     fn test_box_gps_example_small() {
-        let mut puzzle = parse_input(SMALL_EXAMPLE);
+        let mut puzzle = parse_input(SMALL_EXAMPLE, false);
         while puzzle.move_robot() {}
 
         assert_eq!(puzzle.all_box_gps().iter().sum::<isize>(), 2028);
@@ -285,9 +312,78 @@ mod tests {
 
     #[test]
     fn test_box_gps_example_big() {
-        let mut puzzle = parse_input(&aocutils::read_input("big_example").unwrap());
+        let mut puzzle = parse_input(&aocutils::read_input("big_example").unwrap(), false);
         while puzzle.move_robot() {}
 
         assert_eq!(puzzle.all_box_gps().iter().sum::<isize>(), 10092);
+    }
+
+    #[test]
+    fn test_parse_example_big_double() {
+        let puzzle = parse_input(&aocutils::read_input("big_example").unwrap(), true);
+
+        assert_eq!(puzzle.draw(), "####################\n##....[]....[]..[]##\n##............[]..##\n##..[][]....[]..[]##\n##....[]@.....[]..##\n##[]##....[]......##\n##[]....[]....[]..##\n##..[][]..[]..[][]##\n##........[]......##\n####################");
+        assert_eq!(puzzle.robot, (8, 4));
+    }
+
+    #[test]
+    fn test_box_gps_example_double() {
+        let puzzle = Puzzle {
+            map: HashMap::from([
+                ((0, 0), Item::Wall),
+                ((1, 0), Item::Wall),
+                ((2, 0), Item::Wall),
+                ((3, 0), Item::Wall),
+                ((4, 0), Item::Wall),
+                ((5, 0), Item::Wall),
+                ((6, 0), Item::Wall),
+                ((7, 0), Item::Wall),
+                ((8, 0), Item::Wall),
+                ((9, 0), Item::Wall),
+                ((0, 1), Item::Wall),
+                ((1, 1), Item::Wall),
+                ((0, 2), Item::Wall),
+                ((1, 2), Item::Wall),
+                ((5, 1), Item::BigBoxLeft),
+                ((6, 1), Item::BigBoxRight),
+            ]),
+            movements: VecDeque::new(),
+            robot: (0, 0),
+        };
+
+        assert_eq!(puzzle.all_box_gps(), vec![105]);
+    }
+
+    #[test]
+    fn test_move_robot_double() {
+        let mut puzzle = parse_input(DOUBLE_EXAMPLE, true);
+        let expected_positions: Vec<Coords> = Vec::from([
+            (10, 3),
+            (9, 3),
+            (9, 4),
+            (9, 5),
+            (8, 5),
+            (7, 5),
+            (7, 4),
+            (7, 4),
+            (6, 4),
+            (5, 4),
+            (5, 3),
+            (5, 2),
+        ]);
+
+        for (t, expected_pos) in expected_positions.into_iter().enumerate() {
+            println!("t={}\n{}\n\n", t, puzzle.draw());
+            assert_eq!(puzzle.robot, expected_pos, "bad position for t={}", t);
+            puzzle.move_robot();
+        }
+    }
+
+    #[test]
+    fn test_big_example_double() {
+        let mut puzzle = parse_input(&aocutils::read_input("big_example").unwrap(), true);
+        while puzzle.move_robot() {}
+
+        assert_eq!(puzzle.draw(), "####################\n##[].......[].[][]##\n##[]...........[].##\n##[]........[][][]##\n##[]......[]....[]##\n##..##......[]....##\n##..[]............##\n##..@......[].[][]##\n##......[][]..[]..##\n####################");
     }
 }
