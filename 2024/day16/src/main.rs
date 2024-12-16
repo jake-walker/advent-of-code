@@ -1,4 +1,8 @@
-use petgraph::{algo::dijkstra, prelude::UnGraphMap, visit::EdgeRef};
+use petgraph::{
+    algo::{astar, dijkstra},
+    prelude::UnGraphMap,
+    visit::EdgeRef,
+};
 
 static TURN_COST: usize = 1000;
 static MOVE_COST: usize = 1;
@@ -27,17 +31,15 @@ impl Maze {
     }
 
     fn best_path_cost(&self) -> Option<usize> {
-        let res = dijkstra(
+        let res = astar(
             &self.map,
             (self.start, Direction::EW),
-            Some((self.goal, Direction::NS)),
+            |(pos, _)| pos == self.goal,
             |e| *e.weight(),
+            |_| 0,
         );
 
-        res.into_iter()
-            .filter(|((pos, _), _)| pos == &self.goal)
-            .map(|(_, v)| v)
-            .min()
+        res.and_then(|(cost, _)| Some(cost))
     }
 }
 
