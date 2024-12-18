@@ -43,12 +43,55 @@ fn find_path(graph: &UnGraphMap<Coords, ()>, grid_size: usize) -> Option<usize> 
     res.get(&(grid_size, grid_size)).copied()
 }
 
+fn print_map(coords: Vec<Coords>, grid_size: usize) {
+    for y in 0..grid_size + 1 {
+        for x in 0..grid_size + 1 {
+            print!("{}", {
+                if coords.contains(&(x, y)) {
+                    "#"
+                } else {
+                    "."
+                }
+            })
+        }
+        print!("\n")
+    }
+}
+
+fn find_blocking_coord(coords: Vec<Coords>, grid_size: usize) -> Option<Coords> {
+    let mut start = 0;
+    let mut end = coords.len();
+
+    while start != end {
+        let mid = start + ((end - start) / 2);
+        println!("{} - {}: searching at {}", start, end, mid);
+
+        let g = create_graph(coords[0..mid].to_vec(), grid_size);
+        let path_len = find_path(&g, grid_size);
+
+        if mid == start || mid == end {
+            return Some(coords[mid]);
+        }
+
+        if path_len.is_none() {
+            end = mid;
+        } else {
+            start = mid;
+        }
+    }
+
+    None
+}
+
 fn main() {
     let coords = parse_input(&aocutils::read_input("input").unwrap());
-
     let g = create_graph(coords[0..1024].to_vec(), GRID_SIZE);
 
     println!("part 1: {}", find_path(&g, GRID_SIZE).unwrap());
+    println!(
+        "part 2: {:?}",
+        find_blocking_coord(coords, GRID_SIZE).unwrap()
+    );
 }
 
 #[cfg(test)]
@@ -63,5 +106,11 @@ mod tests {
         let coords = parse_input(EXAMPLE_POSITIONS);
         let g = create_graph(coords[0..12].to_vec(), EXAMPLE_GRID_SIZE);
         assert_eq!(find_path(&g, EXAMPLE_GRID_SIZE), Some(22));
+    }
+
+    #[test]
+    fn test_find_blocking_coord() {
+        let coords = parse_input(EXAMPLE_POSITIONS);
+        assert_eq!(find_blocking_coord(coords, EXAMPLE_GRID_SIZE), Some((6, 1)));
     }
 }
