@@ -7,20 +7,15 @@ let package = Package(
     name: "day01",
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
-        .executable(
-            name: "day01",
-            targets: ["day01"]
-        )
+        .executable(name: "day01", targets: ["day01"]),
+        .executable(name: "day02", targets: ["day02"]),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
-        .target(
-            name: "day01"
-        ),
-        .testTarget(
-            name: "day01Tests",
-            dependencies: ["day01"]
-        ),
+        .target(name: "day01"),
+        .testTarget(name: "day01Tests", dependencies: ["day01"]),
+        .target(name: "day02"),
+        .testTarget(name: "day02Tests", dependencies: ["day02"]),
     ]
 )
