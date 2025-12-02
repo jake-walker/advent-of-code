@@ -10,3 +10,11 @@ import Testing
     let ranges = parseInput(input: input)
     #expect(part1(ranges: ranges) == 1_227_775_554)
 }
+
+@Test func examplePart2() async throws {
+    let fileUrl = URL(fileURLWithPath: "Tests/day02Tests/example.txt")
+    let input = try String(contentsOf: fileUrl, encoding: .utf8)
+
+    let ranges = parseInput(input: input)
+    #expect(part2(ranges: ranges) == 4_174_379_265)
+}
