@@ -1,44 +1,64 @@
 {
-  "configurations": [
-    {
-        "type": "swift",
-        "request": "launch",
-        "args": [],
-        "cwd": "${workspaceFolder:2025}",
-        "name": "Debug day01",
-        "target": "day01",
-        "configuration": "debug",
-        "preLaunchTask": "swift: Build Debug day01"
-    },
-    {
-        "type": "swift",
-        "request": "launch",
-        "args": [],
-        "cwd": "${workspaceFolder:2025}",
-        "name": "Release day01",
-        "target": "day01",
-        "configuration": "release",
-        "preLaunchTask": "swift: Build Release day01"
-    },
-    {
-        "type": "swift",
-        "request": "launch",
-        "args": [],
-        "cwd": "${workspaceFolder:2025}",
-        "name": "Debug day02",
-        "target": "day02",
-        "configuration": "debug",
-        "preLaunchTask": "swift: Build Debug day02"
-    },
-    {
-        "type": "swift",
-        "request": "launch",
-        "args": [],
-        "cwd": "${workspaceFolder:2025}",
-        "name": "Release day02",
-        "target": "day02",
-        "configuration": "release",
-        "preLaunchTask": "swift: Build Release day02"
-    }
-]
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:2025}",
+            "name": "Debug day01",
+            "target": "day01",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug day01"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:2025}",
+            "name": "Release day01",
+            "target": "day01",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release day01"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:2025}",
+            "name": "Debug day02",
+            "target": "day02",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug day02"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:2025}",
+            "name": "Release day02",
+            "target": "day02",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release day02"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:2025}",
+            "name": "Debug day03",
+            "target": "day03",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug day03"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:2025}",
+            "name": "Release day03",
+            "target": "day03",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release day03"
+        }
+    ]
 }
