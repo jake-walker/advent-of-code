@@ -16,5 +16,13 @@ import Testing
     let input = try String(contentsOf: fileUrl, encoding: .utf8)
     let parsed = parseInput(input: input)
 
-    #expect(part1(map: parsed) == 13)
+    #expect(getAccessible(map: parsed).count == 13)
+}
+
+@Test func examplePart2() async throws {
+    let fileUrl = URL(fileURLWithPath: "Tests/day04Tests/example.txt")
+    let input = try String(contentsOf: fileUrl, encoding: .utf8)
+    let parsed = parseInput(input: input)
+
+    #expect(part2(map: parsed) == 43)
 }

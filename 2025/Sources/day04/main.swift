@@ -7,8 +7,9 @@ public func parseInput(input: String) -> [[Bool]] {
         })
 }
 
-public func part1(map: [[Bool]], maxCount: Int = 4) -> Int {
-    var accessibleCount = 0
+public func getAccessible(map: [[Bool]]) -> [(Int, Int)] {
+    let maxCount = 4
+    var accessible: [(Int, Int)] = []
 
     for (y, row) in map.enumerated() {
         for (x, cell) in row.enumerated() {
@@ -42,12 +43,30 @@ public func part1(map: [[Bool]], maxCount: Int = 4) -> Int {
             }
 
             if surroundingRolls < maxCount {
-                accessibleCount += 1
+                accessible.append((y, x))
             }
         }
     }
 
-    return accessibleCount
+    return accessible
+}
+
+public func part2(map: [[Bool]]) -> Int {
+    var map = map
+    var removed = 0
+
+    while true {
+        let accessible = getAccessible(map: map)
+
+        if accessible.isEmpty {
+            return removed
+        }
+
+        for (y, x) in accessible {
+            map[y][x] = false
+            removed += 1
+        }
+    }
 }
 
 @main
@@ -57,6 +76,7 @@ struct Day04 {
         let input = try String(contentsOf: fileUrl, encoding: .utf8)
         let parsed = parseInput(input: input)
 
-        print("Part 1: \(part1(map: parsed))")
+        print("Part 1: \(getAccessible(map: parsed).count)")
+        print("Part 2: \(part2(map: parsed))")
     }
 }
