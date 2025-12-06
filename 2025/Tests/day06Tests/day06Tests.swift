@@ -26,10 +26,9 @@ import Testing
     #expect(calculateAll(parsed) == [33210, 490, 4_243_455, 401])
 }
 
-// @Test func examplePart2() async throws {
-//     let fileUrl = URL(fileURLWithPath: "Tests/day05Tests/example.txt")
-//     let input = try String(contentsOf: fileUrl, encoding: .utf8)
-//     let parsed = parseInput(input: input)
+@Test func examplePart2() async throws {
+    let fileUrl = URL(fileURLWithPath: "Tests/day06Tests/example.txt")
+    let input = try String(contentsOf: fileUrl, encoding: .utf8)
 
-//     #expect(part2(ingredients: parsed) == 14)
-// }
+    #expect(calculateP2(input) == 3_263_827)
+}
