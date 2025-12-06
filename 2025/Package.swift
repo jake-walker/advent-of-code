@@ -12,6 +12,7 @@ let package = Package(
         .executable(name: "day03", targets: ["day03"]),
         .executable(name: "day04", targets: ["day04"]),
         .executable(name: "day05", targets: ["day05"]),
+        .executable(name: "day06", targets: ["day06"]),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -26,5 +27,7 @@ let package = Package(
         .testTarget(name: "day04Tests", dependencies: ["day04"]),
         .executableTarget(name: "day05"),
         .testTarget(name: "day05Tests", dependencies: ["day05"]),
+        .executableTarget(name: "day06"),
+        .testTarget(name: "day06Tests", dependencies: ["day06"]),
     ]
 )
