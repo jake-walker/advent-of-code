@@ -1,0 +1,39 @@
+name: Test 2025 Swift Solutions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "2025/**"
+      - ".github/workflows/test-2025-swift.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "2025/**"
+      - ".github/workflows/test-2025-swift.yml"
+
+jobs:
+  test:
+    name: Run Swift Tests
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ./2025
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Build
+        run: swift build
+
+      - name: Run tests
+        run: swift test
