@@ -18,19 +18,19 @@ let package = Package(
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
-        .executableTarget(name: "day01"),
-        .testTarget(name: "day01Tests", dependencies: ["day01"]),
-        .executableTarget(name: "day02"),
-        .testTarget(name: "day02Tests", dependencies: ["day02"]),
-        .executableTarget(name: "day03"),
-        .testTarget(name: "day03Tests", dependencies: ["day03"]),
-        .executableTarget(name: "day04"),
-        .testTarget(name: "day04Tests", dependencies: ["day04"]),
-        .executableTarget(name: "day05"),
-        .testTarget(name: "day05Tests", dependencies: ["day05"]),
-        .executableTarget(name: "day06"),
-        .testTarget(name: "day06Tests", dependencies: ["day06"]),
-        .executableTarget(name: "day07"),
-        .testTarget(name: "day07Tests", dependencies: ["day07"]),
+        .executableTarget(name: "day01", exclude: ["input.txt"]),
+        .testTarget(name: "day01Tests", dependencies: ["day01"], resources: [.copy("example.txt")]),
+        .executableTarget(name: "day02", exclude: ["input.txt"]),
+        .testTarget(name: "day02Tests", dependencies: ["day02"], resources: [.copy("example.txt")]),
+        .executableTarget(name: "day03", exclude: ["input.txt"]),
+        .testTarget(name: "day03Tests", dependencies: ["day03"], resources: [.copy("example.txt")]),
+        .executableTarget(name: "day04", exclude: ["input.txt"]),
+        .testTarget(name: "day04Tests", dependencies: ["day04"], resources: [.copy("example.txt")]),
+        .executableTarget(name: "day05", exclude: ["input.txt"]),
+        .testTarget(name: "day05Tests", dependencies: ["day05"], resources: [.copy("example.txt")]),
+        .executableTarget(name: "day06", exclude: ["input.txt"]),
+        .testTarget(name: "day06Tests", dependencies: ["day06"], resources: [.copy("example.txt")]),
+        .executableTarget(name: "day07", exclude: ["input.txt"]),
+        .testTarget(name: "day07Tests", dependencies: ["day07"], resources: [.copy("example.txt")]),
     ]
 )
