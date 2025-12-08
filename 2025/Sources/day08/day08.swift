@@ -49,22 +49,27 @@ func pointPairs(_ points: [Point3]) -> [Point3Pair] {
     return combos
 }
 
-public func processPoints(_ points: [Point3], iterations: Int = 1000) -> [Int] {
+public func processPoints(_ points: [Point3], iterations: Int? = 1000) -> ([Int], (Point3, Point3))
+{
     let pairs = pointPairs(points)
     var ds = DisjointSet(count: points.count)
-    let limit = min(iterations, pairs.count)
+    let limit = min(iterations ?? Int.max, pairs.count)
     var processed = 0
     var idx = 0
-    while processed < limit && idx < pairs.count {
+    var lastMergedPair: (Int, Int)? = nil
+    while (iterations == nil || processed < limit) && idx < pairs.count {
         let (_, i, j) = pairs[idx]
-        _ = ds.union(i, j)
+        let merged = ds.union(i, j)
+        if merged {
+            lastMergedPair = (i, j)
+        }
         processed += 1
         idx += 1
     }
 
     var sizes = ds.allComponentSizes()
     sizes.sort(by: >)
-    return sizes
+    return (sizes, (points[lastMergedPair!.0], points[lastMergedPair!.1]))
 }
 
 @main
@@ -74,9 +79,10 @@ struct Day08 {
         let input = try String(contentsOf: fileUrl, encoding: .utf8)
         let parsed = parseInput(input: input)
 
-        let sizes = processPoints(parsed)
+        let (sizes, _) = processPoints(parsed)
+        let (_, lastMerged) = processPoints(parsed, iterations: nil)
 
         print("Part 1: \(sizes.prefix(3).reduce(1, *))")
-        // print("Part 2: \(weightSum)")
+        print("Part 2: \(lastMerged.0.x * lastMerged.1.x)")
     }
 }

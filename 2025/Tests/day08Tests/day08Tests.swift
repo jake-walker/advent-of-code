@@ -50,7 +50,18 @@ func nearlyEqual(_ a: Double, _ b: Double, tol: Double = 1e-3) -> Bool {
     let input = try String(contentsOf: fileUrl, encoding: .utf8)
     let parsed = parseInput(input: input)
 
-    let sizes = processPoints(parsed, iterations: 10)
+    let (sizes, _) = processPoints(parsed, iterations: 10)
 
     #expect(sizes.prefix(3) == [5, 4, 2])
+}
+
+@Test func testPart2() async throws {
+    let fileUrl = URL(fileURLWithPath: "Tests/day08Tests/example.txt")
+    let input = try String(contentsOf: fileUrl, encoding: .utf8)
+    let parsed = parseInput(input: input)
+
+    let (_, lastMerged) = processPoints(parsed, iterations: nil)
+
+    #expect(lastMerged.0 == Point3(216, 146, 977))
+    #expect(lastMerged.1 == Point3(117, 168, 530))
 }
