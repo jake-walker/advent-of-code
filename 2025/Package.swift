@@ -15,10 +15,12 @@ let package = Package(
         .executable(name: "day06", targets: ["day06"]),
         .executable(name: "day07", targets: ["day07"]),
         .executable(name: "day08", targets: ["day08"]),
+        .executable(name: "day09", targets: ["day09"]),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
+        .target(name: "utils"),
         .executableTarget(name: "day01", exclude: ["input.txt"]),
         .testTarget(name: "day01Tests", dependencies: ["day01"], resources: [.copy("example.txt")]),
         .executableTarget(name: "day02", exclude: ["input.txt"]),
@@ -35,5 +37,8 @@ let package = Package(
         .testTarget(name: "day07Tests", dependencies: ["day07"], resources: [.copy("example.txt")]),
         .executableTarget(name: "day08", exclude: ["input.txt"]),
         .testTarget(name: "day08Tests", dependencies: ["day08"], resources: [.copy("example.txt")]),
+        .executableTarget(name: "day09", dependencies: ["utils"], exclude: ["input.txt"]),
+        .testTarget(
+            name: "day09Tests", dependencies: ["day09", "utils"], resources: [.copy("example.txt")]),
     ]
 )
