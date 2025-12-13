@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "day01",
+    platforms: [.macOS(.v13)],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .executable(name: "day01", targets: ["day01"]),
@@ -16,6 +17,10 @@ let package = Package(
         .executable(name: "day07", targets: ["day07"]),
         .executable(name: "day08", targets: ["day08"]),
         .executable(name: "day09", targets: ["day09"]),
+        .executable(name: "day10", targets: ["day10"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-algorithms", from: "1.2.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -40,5 +45,10 @@ let package = Package(
         .executableTarget(name: "day09", dependencies: ["utils"], exclude: ["input.txt"]),
         .testTarget(
             name: "day09Tests", dependencies: ["day09", "utils"], resources: [.copy("example.txt")]),
+        .executableTarget(
+            name: "day10",
+            dependencies: [.product(name: "Algorithms", package: "swift-algorithms")],
+            exclude: ["input.txt"]),
+        .testTarget(name: "day10Tests", dependencies: ["day10"], resources: [.copy("example.txt")]),
     ]
 )
